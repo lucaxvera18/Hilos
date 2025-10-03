@@ -4,6 +4,11 @@ body {
   background: #f9f9f9;
   margin: 0;
   padding: 20px;
+  color: #222;
+}
+
+h1 {
+  margin-bottom: 10px;
 }
 
 canvas {
@@ -11,4 +16,13 @@ canvas {
   margin: 20px auto;
   display: block;
   background: #fff;
+}
+
+pre {
+  text-align: left;
+  max-height: 300px;
+  overflow-y: auto;
+  background: #eee;
+  padding: 10px;
+  border: 1px solid #ccc;
 }
