@@ -6,18 +6,22 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Generador de String Art Circular</h1>
+  <h1>Generador de String Art</h1>
 
   <div class="form">
+    <label>Subir imagen: <input type="file" id="imagen" accept="image/*"></label><br><br>
     <label>Tamaño de tabla (cm): <input type="number" id="diametro" value="40"></label>
-    <label>Cantidad de clavos: <input type="number" id="clavos" value="450"></label>
-    <button onclick="generarVista()">Generar vista previa</button>
-    <button onclick="descargarPlantilla()">Descargar plantilla (PDF)</button>
+    <label>Cantidad de clavos: <input type="number" id="clavos" value="300"></label>
+    <label>Iteraciones (detalle): <input type="number" id="iteraciones" value="1000"></label>
+    <br>
+    <button onclick="procesarImagen()">Generar vista previa</button>
+    <button onclick="descargarPlantilla()">Descargar plantilla (PDF A4)</button>
     <button onclick="descargarConexiones()">Descargar conexiones (PDF)</button>
   </div>
 
   <canvas id="preview" width="600" height="600"></canvas>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
