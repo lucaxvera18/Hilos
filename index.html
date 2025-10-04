@@ -2,22 +2,28 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>String Art Generator</title>
+  <title>Generador de String Art</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <h1>Generador de String Art</h1>
-  <p>Subí una foto y generá tu patrón con 450 clavos.</p>
 
-  <input type="file" id="upload" accept="image/*"><br><br>
-  <button id="generate">Generar Patrón</button>
+  <label>Seleccionar imagen: <input type="file" id="fileInput"></label><br><br>
+  <label>Número de clavos: <input type="number" id="numClavos" value="450"></label><br><br>
+  <label>Ancho tabla (cm): <input type="number" id="ancho" value="49"></label>
+  <label>Alto tabla (cm): <input type="number" id="alto" value="40"></label><br><br>
 
+  <button id="generar">Generar Patrón</button>
+  <button id="pdfBtn">Descargar PDF</button>
+
+  <br><br>
   <canvas id="canvas" width="800" height="800"></canvas>
 
-  <h2>Conexiones:</h2>
-  <pre id="connections"></pre>
+  <h3>Conexiones:</h3>
+  <textarea id="conexiones"></textarea>
 
+  <!-- Librería para generar PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
