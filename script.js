@@ -3,11 +3,19 @@ const ctx = canvas.getContext('2d');
 let clavos = [];
 let conexiones = [];
 
-// Distribuir clavos en círculo
-function generarClavos(n) {
-  const radio = Math.min(canvas.width, canvas.height) / 2 - 20;
-  const cx = canvas.width / 2;
-  const cy = canvas.height / 2;
+// Constantes PDF
+const cmToPt = 28.35; // 1 cm = 28.35 puntos PDF
+const A4_WIDTH = 595; // puntos (210 mm)
+const A4_HEIGHT = 842; // puntos (297 mm)
+
+// Generar clavos en círculo
+function generarClavos(n, anchoCm, altoCm) {
+  const anchoPts = anchoCm * cmToPt;
+  const altoPts = altoCm * cmToPt;
+  const cx = anchoPts / 2;
+  const cy = altoPts / 2;
+  const radio = Math.min(anchoPts, altoPts) / 2 - 20;
+
   clavos = [];
   for (let i = 0; i < n; i++) {
     const ang = 2 * Math.PI * i / n;
@@ -18,7 +26,7 @@ function generarClavos(n) {
   }
 }
 
-// Simular conexiones (ejemplo: cada clavo con el opuesto)
+// Generar conexiones (ejemplo simple: opuestos)
 function generarConexiones(n) {
   conexiones = [];
   for (let i = 0; i < n; i++) {
@@ -26,7 +34,7 @@ function generarConexiones(n) {
   }
 }
 
-// Dibujar clavos + hilos
+// Dibujar patrón en canvas (solo preview)
 function drawPattern() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -34,7 +42,9 @@ function drawPattern() {
   ctx.fillStyle = "black";
   clavos.forEach(c => {
     ctx.beginPath();
-    ctx.arc(c.x, c.y, 2, 0, 2*Math.PI);
+    ctx.arc(c.x * (canvas.width / (49 * cmToPt)), 
+            c.y * (canvas.height / (40 * cmToPt)), 
+            2, 0, 2 * Math.PI);
     ctx.fill();
   });
 
@@ -43,20 +53,24 @@ function drawPattern() {
   conexiones.forEach(par => {
     let [i, j] = par;
     ctx.beginPath();
-    ctx.moveTo(clavos[i].x, clavos[i].y);
-    ctx.lineTo(clavos[j].x, clavos[j].y);
+    ctx.moveTo(clavos[i].x * (canvas.width / (49 * cmToPt)), 
+               clavos[i].y * (canvas.height / (40 * cmToPt)));
+    ctx.lineTo(clavos[j].x * (canvas.width / (49 * cmToPt)), 
+               clavos[j].y * (canvas.height / (40 * cmToPt)));
     ctx.stroke();
   });
 }
 
-// Botón generar
+// Botón generar patrón
 document.getElementById('generar').onclick = () => {
   const n = parseInt(document.getElementById('numClavos').value);
-  generarClavos(n);
+  const ancho = parseFloat(document.getElementById('ancho').value);
+  const alto = parseFloat(document.getElementById('alto').value);
+
+  generarClavos(n, ancho, alto);
   generarConexiones(n);
   drawPattern();
 
-  // Mostrar conexiones
   let txt = "";
   conexiones.forEach(c => {
     txt += (c[0]+1) + " → " + (c[1]+1) + "\n";
@@ -64,34 +78,59 @@ document.getElementById('generar').onclick = () => {
   document.getElementById('conexiones').value = txt;
 };
 
-// Botón PDF
-document.getElementById('pdfBtn').onclick = () => {
+// Botón PDF plantilla de clavos
+document.getElementById('pdfPlantilla').onclick = () => {
+  const ancho = parseFloat(document.getElementById('ancho').value);
+  const alto = parseFloat(document.getElementById('alto').value);
+
+  const anchoPts = ancho * cmToPt;
+  const altoPts = alto * cmToPt;
+
+  const pagesX = Math.ceil(anchoPts / A4_WIDTH);
+  const pagesY = Math.ceil(altoPts / A4_HEIGHT);
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ unit: "pt", format: "a4" });
+
+  clavos.forEach((c, i) => {
+    const pageX = Math.floor(c.x / A4_WIDTH);
+    const pageY = Math.floor(c.y / A4_HEIGHT);
+    const pageIndex = pageY * pagesX + pageX;
+
+    while (pdf.getNumberOfPages() <= pageIndex) {
+      pdf.addPage();
+    }
+    pdf.setPage(pageIndex + 1);
+
+    const offsetX = c.x - pageX * A4_WIDTH;
+    const offsetY = c.y - pageY * A4_HEIGHT;
+
+    pdf.circle(offsetX, offsetY, 1, "F");
+    pdf.setFontSize(6);
+    pdf.text((i+1).toString(), offsetX+2, offsetY+2);
+  });
+
+  pdf.save("plantilla_clavos.pdf");
+};
+
+// Botón PDF conexiones
+document.getElementById('pdfConexiones').onclick = () => {
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF();
 
   pdf.setFontSize(16);
-  pdf.text("Plantilla de String Art", 20, 20);
+  pdf.text("Lista de Conexiones - String Art", 20, 20);
 
-  // Dibujar círculo con clavos numerados
-  clavos.forEach((c, i) => {
-    const x = 100 + 80 * Math.cos(2*Math.PI*i/clavos.length);
-    const y = 150 + 80 * Math.sin(2*Math.PI*i/clavos.length);
-    pdf.circle(x, y, 0.8, "F");
-    pdf.setFontSize(6);
-    pdf.text((i+1).toString(), x+1, y+1);
-  });
-
-  // Lista de conexiones
   pdf.setFontSize(10);
-  let y = 250;
-  conexiones.forEach((c) => {
+  let y = 40;
+  conexiones.forEach(c => {
     pdf.text((c[0]+1) + " → " + (c[1]+1), 20, y);
-    y += 5;
+    y += 10;
     if (y > 280) {
       pdf.addPage();
       y = 20;
     }
   });
 
-  pdf.save("string_art.pdf");
+  pdf.save("conexiones.pdf");
 };
