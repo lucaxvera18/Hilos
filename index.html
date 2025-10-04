@@ -2,28 +2,22 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Generador de String Art</title>
+  <title>String Art Generator</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Generador de String Art</h1>
+  <h1>Generador de String Art Circular</h1>
 
-  <label>Seleccionar imagen: <input type="file" id="fileInput"></label><br><br>
-  <label>Número de clavos: <input type="number" id="numClavos" value="450"></label><br><br>
-  <label>Ancho tabla (cm): <input type="number" id="ancho" value="49"></label>
-  <label>Alto tabla (cm): <input type="number" id="alto" value="40"></label><br><br>
+  <div class="form">
+    <label>Tamaño de tabla (cm): <input type="number" id="diametro" value="40"></label>
+    <label>Cantidad de clavos: <input type="number" id="clavos" value="450"></label>
+    <button onclick="generarVista()">Generar vista previa</button>
+    <button onclick="descargarPlantilla()">Descargar plantilla (PDF)</button>
+    <button onclick="descargarConexiones()">Descargar conexiones (PDF)</button>
+  </div>
 
-  <button id="generar">Generar Patrón</button>
-  <button id="pdfBtn">Descargar PDF</button>
+  <canvas id="preview" width="600" height="600"></canvas>
 
-  <br><br>
-  <canvas id="canvas" width="800" height="800"></canvas>
-
-  <h3>Conexiones:</h3>
-  <textarea id="conexiones"></textarea>
-
-  <!-- Librería para generar PDF -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
