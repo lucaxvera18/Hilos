@@ -1,105 +1,97 @@
-const numClavos = 450;
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-const connectionsBox = document.getElementById("connections");
-let imgData = null;
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let clavos = [];
+let conexiones = [];
 
-// Dibujar clavos en círculo
-function drawPins(radius = 350) {
+// Distribuir clavos en círculo
+function generarClavos(n) {
+  const radio = Math.min(canvas.width, canvas.height) / 2 - 20;
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  clavos = [];
+  for (let i = 0; i < n; i++) {
+    const ang = 2 * Math.PI * i / n;
+    clavos.push({
+      x: cx + radio * Math.cos(ang),
+      y: cy + radio * Math.sin(ang)
+    });
+  }
+}
+
+// Simular conexiones (ejemplo: cada clavo con el opuesto)
+function generarConexiones(n) {
+  conexiones = [];
+  for (let i = 0; i < n; i++) {
+    conexiones.push([i, (i + Math.floor(n/2)) % n]);
+  }
+}
+
+// Dibujar clavos + hilos
+function drawPattern() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  const pins = [];
-  for (let i = 0; i < numClavos; i++) {
-    let angle = 2 * Math.PI * i / numClavos;
-    let x = canvas.width / 2 + radius * Math.cos(angle);
-    let y = canvas.height / 2 + radius * Math.sin(angle);
-    pins.push({x, y});
+
+  // Clavos
+  ctx.fillStyle = "black";
+  clavos.forEach(c => {
     ctx.beginPath();
-    ctx.arc(x, y, 2, 0, Math.PI * 2);
+    ctx.arc(c.x, c.y, 2, 0, 2*Math.PI);
     ctx.fill();
-  }
-  return pins;
-}
+  });
 
-// Cargar imagen y pasar a escala de grises
-document.getElementById("upload").addEventListener("change", function(e) {
-  const img = new Image();
-  img.onload = () => {
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-    let image = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    // Escala de grises invertida (zonas oscuras = mayor densidad de hilos)
-    for (let i = 0; i < image.data.length; i += 4) {
-      let avg = (image.data[i] + image.data[i+1] + image.data[i+2]) / 3;
-      let inverted = 255 - avg;
-      image.data[i] = image.data[i+1] = image.data[i+2] = inverted;
-    }
-    ctx.putImageData(image, 0, 0);
-    imgData = image;
-  };
-  img.src = URL.createObjectURL(e.target.files[0]);
-});
-
-// Función para evaluar oscuridad de una línea
-function lineScore(x0, y0, x1, y1, data, width) {
-  let dx = Math.abs(x1 - x0);
-  let dy = Math.abs(y1 - y0);
-  let sx = (x0 < x1) ? 1 : -1;
-  let sy = (y0 < y1) ? 1 : -1;
-  let err = dx - dy;
-  let score = 0, count = 0;
-
-  while (true) {
-    if (x0 >= 0 && y0 >= 0 && x0 < width && y0 < width) {
-      let idx = (y0 * width + x0) * 4;
-      score += data[idx];
-      count++;
-    }
-    if (x0 === x1 && y0 === y1) break;
-    let e2 = 2 * err;
-    if (e2 > -dy) { err -= dy; x0 += sx; }
-    if (e2 < dx) { err += dx; y0 += sy; }
-  }
-  return score / (count || 1);
-}
-
-// Generar patrón de conexiones
-document.getElementById("generate").addEventListener("click", () => {
-  if (!imgData) {
-    alert("Primero subí una foto.");
-    return;
-  }
-
-  const pins = drawPins();
-  let seq = [];
-  let current = 0;
-
-  ctx.lineWidth = 0.3;
-  ctx.strokeStyle = "black";
-
-  for (let step = 0; step < 2000; step++) {
-    let bestScore = -1;
-    let bestPin = null;
-
-    for (let j = 0; j < numClavos; j++) {
-      if (j === current) continue;
-      let score = lineScore(
-        Math.round(pins[current].x), Math.round(pins[current].y),
-        Math.round(pins[j].x), Math.round(pins[j].y),
-        imgData.data, canvas.width
-      );
-      if (score > bestScore) {
-        bestScore = score;
-        bestPin = j;
-      }
-    }
-
+  // Hilos
+  ctx.strokeStyle = "rgba(0,0,0,0.2)";
+  conexiones.forEach(par => {
+    let [i, j] = par;
     ctx.beginPath();
-    ctx.moveTo(pins[current].x, pins[current].y);
-    ctx.lineTo(pins[bestPin].x, pins[bestPin].y);
+    ctx.moveTo(clavos[i].x, clavos[i].y);
+    ctx.lineTo(clavos[j].x, clavos[j].y);
     ctx.stroke();
+  });
+}
 
-    seq.push(`${current+1} → ${bestPin+1}`);
-    current = bestPin;
-  }
+// Botón generar
+document.getElementById('generar').onclick = () => {
+  const n = parseInt(document.getElementById('numClavos').value);
+  generarClavos(n);
+  generarConexiones(n);
+  drawPattern();
 
-  connectionsBox.textContent = seq.join("\n");
-});
+  // Mostrar conexiones
+  let txt = "";
+  conexiones.forEach(c => {
+    txt += (c[0]+1) + " → " + (c[1]+1) + "\n";
+  });
+  document.getElementById('conexiones').value = txt;
+};
+
+// Botón PDF
+document.getElementById('pdfBtn').onclick = () => {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
+
+  pdf.setFontSize(16);
+  pdf.text("Plantilla de String Art", 20, 20);
+
+  // Dibujar círculo con clavos numerados
+  clavos.forEach((c, i) => {
+    const x = 100 + 80 * Math.cos(2*Math.PI*i/clavos.length);
+    const y = 150 + 80 * Math.sin(2*Math.PI*i/clavos.length);
+    pdf.circle(x, y, 0.8, "F");
+    pdf.setFontSize(6);
+    pdf.text((i+1).toString(), x+1, y+1);
+  });
+
+  // Lista de conexiones
+  pdf.setFontSize(10);
+  let y = 250;
+  conexiones.forEach((c) => {
+    pdf.text((c[0]+1) + " → " + (c[1]+1), 20, y);
+    y += 5;
+    if (y > 280) {
+      pdf.addPage();
+      y = 20;
+    }
+  });
+
+  pdf.save("string_art.pdf");
+};
